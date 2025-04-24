@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}文件列表{% endblock %}
+
+{% block content %}
+<h2>文件列表</h2>
+<form method="get" class="d-flex mb-3">
+  <input type="text" name="q" value="{{ query }}" class="form-control me-2" placeholder="搜索文件名 / 备注 / 路径">
+  <button type="submit" class="btn btn-outline-primary">搜索</button>
+  {% if query %}
+    <a href="{% url 'file_list' %}" class="btn btn-outline-secondary ms-2">清除</a>
+  {% endif %}
+</form>
+<table class="table table-bordered">
+  <thead>
+    <tr><th>名称</th><th>上传人</th><th>操作</th></tr>
+  </thead>
+  <tbody>
+    {% for file in page_obj %}
+      <tr>
+        <td>{{ file.name }}</td>
+        <td>{{ file.uploaded_by.username }}</td>
+        <td>
+          <a href="{% url 'download_file' file.id %}" class="btn btn-sm btn-primary">下载</a>
+
+          <a href="{% url 'edit_permissions' file.id %}" class="btn btn-sm btn-outline-warning">编辑权限</a>
+
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="3">暂无可访问文件</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<nav>
+  <ul class="pagination">
+    {% if page_obj.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}">上一页</a>
+      </li>
+    {% endif %}
+
+    <li class="page-item disabled">
+      <span class="page-link">第 {{ page_obj.number }} 页，共 {{ page_obj.paginator.num_pages }} 页</span>
+    </li>
+
+    {% if page_obj.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}">下一页</a>
+      </li>
+    {% endif %}
+  </ul>
+</nav>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}录入文件路径{% endblock %}
+
+{% block content %}
+<h2>录入文件路径</h2>
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+
+  <button type="submit" class="btn btn-primary">保存路径</button>
+</form>
+<a href="{% url 'file_list' %}" class="btn btn-link mt-3">返回文件列表</a>
+{% endblock %}

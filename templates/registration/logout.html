@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block title %}已登出{% endblock %}
+{% block content %}
+<p>您已成功退出登录。</p>
+<a href="{% url 'login' %}" class="btn btn-primary">重新登录</a>
+{% endblock %}

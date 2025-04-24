@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}编辑文件权限{% endblock %}
+
+{% block content %}
+<h2>编辑权限：{{ file.name }}</h2>
+
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit" class="btn btn-primary">保存修改</button>
+</form>
+
+<a href="{% url 'file_list' %}" class="btn btn-link mt-3">返回文件列表</a>
+{% endblock %}
