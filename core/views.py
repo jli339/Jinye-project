@@ -3,34 +3,36 @@ from django.contrib.auth.decorators import login_required
 # Create your views here.
 
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import FileResponse, HttpResponseForbidden
+from django.http import FileResponse, HttpResponseForbidden,Http404
 from .models import FileResource
 # from .forms import FileResourceForm
-from .forms import FilePathForm
+from .forms import FileUploadForm
 from django.core.paginator import Paginator
 from .models import ActionLog
+from django.conf import settings
+import os
 @login_required
 def upload_file(request):
     if request.method == 'POST':
-        form = FilePathForm(request.POST, user=request.user)
+        form = FileUploadForm(request.POST,request.FILES, user=request.user)
         if form.is_valid():
-            file = form.save(commit=False)
-            file.uploaded_by = request.user
+            file_obj = form.save(commit=False)
+            file_obj.uploaded_by = request.user
 
             # 如果是普通用户，自动设定权限字段为其自身角色
             if request.user.role != 'admin':
-                file.readable_roles = [request.user.role]
-                file.editable_roles = []
-            file.save()
+                file_obj.readable_roles = [request.user.role]
+                file_obj.editable_roles = []
+            file_obj.save()
             ActionLog.objects.create(
                 user=request.user,
-                file=file,
+                file=file_obj,
                 action='upload',
                 ip=request.META.get('REMOTE_ADDR')
             )
             return redirect('file_list')
     else:
-        form = FilePathForm(user=request.user)
+        form = FileUploadForm(user=request.user)
 
     return render(request, 'core/upload.html', {'form': form})
 
@@ -38,43 +40,53 @@ def download_file(request, file_id):
     file = get_object_or_404(FileResource, id=file_id)
     if not file.can_view(request.user):
         return HttpResponseForbidden("没有访问权限")
+    file_path = file.file.path
+
+    # 检查文件是否存在
+    if not os.path.exists(file_path):
+        raise Http404("文件未找到")
+
+    # 记录日志
     ActionLog.objects.create(
         user=request.user,
         file=file,
-        action='view',
-        ip=request.META.get('REMOTE_ADDR')
+        action='download'
     )
-    return FileResponse(file.path)
+
+    # 返回文件响应
+    return FileResponse(open(file_path, 'rb'), as_attachment=True, filename=file.name)
 
 @login_required
 def file_list(request):
-    query = request.GET.get('q', '')
-    category_filter = request.GET.get('category', '')
+    user = request.user
+    query = request.GET.get('q')
+    category = request.GET.get('category')
 
-    all_files = FileResource.objects.all()
-    visible_files = [f for f in all_files if f.can_view(request.user)]
+    files = FileResource.objects.all()
 
+    # 权限过滤：只有可见的文件才展示
+    files = [f for f in files if f.can_view(user)]
+
+    # 动态检测物理文件是否存在
+    for f in files:
+        f.exists_on_disk = os.path.exists(os.path.join(settings.MEDIA_ROOT, f.file.name))
+
+    # 查询过滤
     if query:
-        visible_files = [
-            f for f in visible_files
-            if query.lower() in f.name.lower()
-            or query.lower() in f.description.lower()
-            or query.lower() in f.path.lower()
-        ]
+        files = [f for f in files if query.lower() in f.name.lower() or query.lower() in (f.description or '').lower()]
 
+    if category:
+        files = [f for f in files if f.category == category]
 
-
-    if category_filter:
-        visible_files = [f for f in visible_files if f.category == category_filter]
-
-    paginator = Paginator(visible_files, 10)  # 每页 10 条
+    # 分页处理
+    paginator = Paginator(files, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
     return render(request, 'core/file_list.html', {
-        'page_obj': page_obj,
+        'files': page_obj,
         'query': query,
-        'category_filter': category_filter,
+        'category': category,
     })
 @login_required
 def edit_permissions(request, file_id):
@@ -85,7 +97,7 @@ def edit_permissions(request, file_id):
         return HttpResponseForbidden("您没有权限修改此文件权限。")
 
     if request.method == 'POST':
-        form = FilePathForm(request.POST, instance=file, user=request.user)
+        form = FileUploadForm(request.POST, instance=file, user=request.user)
         if form.is_valid():
             form.save()
             ActionLog.objects.create(
@@ -96,7 +108,7 @@ def edit_permissions(request, file_id):
             )
             return redirect('file_list')
     else:
-        form = FilePathForm(instance=file, user=request.user)
+        form = FileUploadForm(instance=file, user=request.user)
 
     return render(request, 'core/edit_permissions.html', {'form': form, 'file': file})
 

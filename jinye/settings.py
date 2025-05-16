@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'accounts',
     'core',
     'guardian',
+    'django_apscheduler',
 ]
 
 AUTH_USER_MODEL = 'accounts.User'
@@ -138,3 +139,6 @@ LOGOUT_REDIRECT_URL = '/accounts/login/'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_AGE = 1800  # 30分钟
 SESSION_SAVE_EVERY_REQUEST = True
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'

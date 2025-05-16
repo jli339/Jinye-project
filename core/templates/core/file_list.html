@@ -11,45 +11,55 @@
     <a href="{% url 'file_list' %}" class="btn btn-outline-secondary ms-2">清除</a>
   {% endif %}
 </form>
-<table class="table table-bordered">
-  <thead>
-    <tr><th>名称</th><th>上传人</th><th>操作</th></tr>
-  </thead>
-  <tbody>
-    {% for file in page_obj %}
-      <tr>
-        <td>{{ file.name }}</td>
-        <td>{{ file.uploaded_by.username }}</td>
-        <td>
-          <a href="{% url 'download_file' file.id %}" class="btn btn-sm btn-primary">下载</a>
-
-          <a href="{% url 'edit_permissions' file.id %}" class="btn btn-sm btn-outline-warning">编辑权限</a>
-
-        </td>
-      </tr>
+<table class="table table-bordered table-hover">
+    <thead>
+        <tr>
+            <th>文件名</th>
+            <th>描述</th>
+            <th>类别</th>
+            <th>上传者</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for file in files %}
+        <tr>
+            <td>{{ file.name }}</td>
+            <td>{{ file.description }}</td>
+            <td>{{ file.get_category_display }}</td>
+            <td>{{ file.uploaded_by.username }}</td>
+            <td>
+                {% if file.exists_on_disk %}
+                    <a href="{% url 'download_file' file.id %}" class="btn btn-sm btn-primary">下载</a>
+                {% else %}
+                    <span class="text-danger">文件已被移除</span>
+                {% endif %}
+            </td>
+        </tr>
     {% empty %}
-      <tr><td colspan="3">暂无可访问文件</td></tr>
+        <tr><td colspan="5" class="text-center text-muted">暂无文件</td></tr>
     {% endfor %}
-  </tbody>
+    </tbody>
 </table>
 
+<!-- 分页导航 -->
 <nav>
-  <ul class="pagination">
-    {% if page_obj.has_previous %}
-      <li class="page-item">
-        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}">上一页</a>
-      </li>
-    {% endif %}
+    <ul class="pagination">
+        {% if files.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ files.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if category %}&category={{ category }}{% endif %}">上一页</a>
+            </li>
+        {% endif %}
 
-    <li class="page-item disabled">
-      <span class="page-link">第 {{ page_obj.number }} 页，共 {{ page_obj.paginator.num_pages }} 页</span>
-    </li>
+        <li class="page-item active">
+            <span class="page-link">{{ files.number }}/{{ files.paginator.num_pages }}</span>
+        </li>
 
-    {% if page_obj.has_next %}
-      <li class="page-item">
-        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}">下一页</a>
-      </li>
-    {% endif %}
-  </ul>
+        {% if files.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ files.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if category %}&category={{ category }}{% endif %}">下一页</a>
+            </li>
+        {% endif %}
+    </ul>
 </nav>
 {% endblock %}

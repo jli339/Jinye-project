@@ -5,6 +5,7 @@ from django.db import models
 from django.conf import settings
 
 class FileResource(models.Model):
+    objects = None
     CATEGORY_CHOICES = [
         ('drawing', '图纸'),
         ('report', '报告'),
@@ -13,7 +14,7 @@ class FileResource(models.Model):
     ]
 
     name = models.CharField(max_length=255)
-    path = models.CharField(max_length=1024,default=r'C:\Users\Lenovo\Desktop\模拟共享')
+    file = models.FileField(upload_to='uploads/')  # 新增字段：接收上传文件
     description = models.CharField(max_length=255, blank=True)
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default='other')  # ✅ 新字段
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -28,10 +29,17 @@ class FileResource(models.Model):
         return user.role in self.editable_roles or user.is_superuser
 
     def __str__(self):
-        return self.name
+        return self.name or self.file.name
+
+    def get_file_url(self):
+        return self.file.url if self.file else ''
+
+    def get_file_path(self):
+        return self.file.path if self.file else ''
 
 
 class ActionLog(models.Model):
+    objects = None
     ACTION_CHOICES = [
         ('view', '查看'),
         ('edit_permissions', '修改权限'),

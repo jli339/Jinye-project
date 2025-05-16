@@ -4,14 +4,14 @@ from .models import FileResource
 from django import forms
 from .models import FileResource
 
-class FilePathForm(forms.ModelForm):
+class FileUploadForm(forms.ModelForm):
     class Meta:
         model = FileResource
-        fields = ['name', 'path','description','category', 'readable_roles', 'editable_roles']
+        fields = ['file', 'name','description','category', 'readable_roles', 'editable_roles']
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
-        super(FilePathForm, self).__init__(*args, **kwargs)
+        super(FileUploadForm, self).__init__(*args, **kwargs)
 
         ROLE_CHOICES = [
             ('admin', '管理员'),
