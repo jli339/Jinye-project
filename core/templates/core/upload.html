@@ -1,14 +1,91 @@
-{% extends "base.html" %}
-{% block title %}录入文件路径{% endblock %}
+<!-- upload.html：动态目录树选择器 + 文件上传表单 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>上传文件</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/themes/default/style.min.css"/>
+    <style>
+        #folderTreeWrapper {
+            border: 1px solid #ccc;
+            padding: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
 
-{% block content %}
+        #folderTree {
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
 <h2>上传文件</h2>
 <form method="post" enctype="multipart/form-data">
-  {% csrf_token %}
-  {{ form.as_p }}
+    {% csrf_token %}
+    {{ form.file.label_tag }} {{ form.file }}<br><br>
+    {{ form.name.label_tag }} {{ form.name }}<br><br>
+    {{ form.description.label_tag }} {{ form.description }}<br><br>
+    {{ form.category.label_tag }} {{ form.category }}<br><br>
+    {{ form.readable_roles.label_tag }} {{ form.readable_roles }}<br><br>
+    {{ form.editable_roles.label_tag }} {{ form.editable_roles }}<br><br>
 
-  <button type="submit" class="btn btn-primary">保存路径</button>
+    <label for="target_path">选择目标保存路径：</label>
+    <div id="folderTreeWrapper">
+        <div id="folderTree"></div>
+    </div>
+    <input type="hidden" id="target_path" name="target_path">
+    <p>当前选择：<span id="selectedPath">(未选择)</span></p>
+
+    <button type="submit">上传</button>
 </form>
 
-<a href="{% url 'file_list' %}" class="btn btn-link mt-3">返回文件列表</a>
-{% endblock %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/jstree.min.js"></script>
+<script>
+    // 获取目录树数据并渲染
+    $(function () {
+        fetch("/api/folder_tree/")
+            .then(res => res.json())
+            .then(data => {
+                console.log("✅ 原始目录树数据：", data);  // ✅ 调试点 1
+
+                // 格式转换
+                const treeData = formatForJsTree(data);
+                console.log("✅ 转换后的 treeData：", treeData);  // ✅ 调试点 2
+
+                $('#folderTree').jstree({'core': {'data': treeData}});
+
+                // 监听点击事件
+                $('#folderTree').on("select_node.jstree", function (e, data) {
+                    console.log("✅ 节点点击事件触发：", data);  // ✅ 调试点 3
+                    console.log("📌 原始 node 数据：", data.node);
+                    console.log("📌 node.original：", data.node.data);
+                    console.log("📌 node.original.path：", data.node.data?.path);
+                    console.dir(data.node); // 用 dir 看结构体
+
+                    const selectedPath = data.node.data?.path;
+                    if (selectedPath) {
+                        $('#target_path').val(selectedPath);
+                        $('#selectedPath').text(selectedPath);
+                        console.log("✅ 选中路径：", selectedPath);  // ✅ 调试点 4
+                    } else {
+                        alert("⚠️ 当前节点未绑定 path 字段！");
+                    }
+                });
+            })
+            .catch(err => {
+                console.error("❌ 获取目录树失败：", err);
+            });
+    });
+
+    // 转换后端结构为 jsTree 格式
+    function formatForJsTree(nodes) {
+        return nodes.map(node => ({
+            text: node.label,
+        
+            data: {path: node.path},  // ✅ 添加 original 结构
+            children: formatForJsTree(node.children || []),
+            state: {opened: true},
+        }));
+    }
+</script>

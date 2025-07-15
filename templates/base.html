@@ -6,35 +6,59 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-3">
-        <a class="navbar-brand" href="/">金冶系统</a>
-        <div class="collapse navbar-collapse">
-            <ul class="navbar-nav ms-auto">
-                {% if user.is_authenticated and user.role == 'admin' %}
-  <li class="nav-item">
-    <a class="nav-link" href="{% url 'action_log_list' %}">操作日志</a>
-  </li>
-{% endif %}
-                {% if user.is_authenticated %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">{{ user.username }}</a>
-                    </li>
-                  <form method="post" action="{% url 'logout' %}" style="display:inline;">
-  {% csrf_token %}
-  <button type="submit" class="nav-link btn btn-link" style="padding:0;">登出</button>
-</form>
-                {% else %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'login' %}">登录</a>
-                    </li>
-                {% endif %}
-            </ul>
-        </div>
-    </nav>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark px-3">
+    <a class="navbar-brand" href="{% url 'index' %}">金冶管理系统</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+        <span class="navbar-toggler-icon"></span>
+    </button>
 
-    <div class="container mt-4">
-        {% block content %}
-        {% endblock %}
+    <div class="collapse navbar-collapse" id="navbarMain">
+        <ul class="navbar-nav me-auto">
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'file_list' %}">📁 文件管理</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link disabled" href="#">📦 仓库管理（预留）</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link disabled" href="#">📝 生产排产（预留）</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link disabled" href="#">📍 进度追踪（预留）</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link disabled" href="#">🗂️ 备忘录（预留）</a>
+            </li>
+            {% if user.is_authenticated and user.role == 'admin' %}
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'action_log_list' %}">🔒 操作日志</a>
+            </li>
+            {% endif %}
+        </ul>
+
+        <ul class="navbar-nav">
+            {% if user.is_authenticated %}
+            <li class="nav-item">
+                <a class="nav-link text-info" href="#">👤 {{ user.username }}</a>
+            </li>
+            <li class="nav-item">
+                <form method="post" action="{% url 'logout' %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="nav-link btn btn-link text-danger" style="padding:0;">登出</button>
+                </form>
+            </li>
+            {% else %}
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'login' %}">登录</a>
+            </li>
+            {% endif %}
+        </ul>
     </div>
+</nav>
+
+<div class="container mt-4">
+    {% block content %}
+    {% endblock %}
+</div>
 </body>
 </html>

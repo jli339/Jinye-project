@@ -1,17 +1,23 @@
 from django import forms
+
 from .models import FileResource
 
-from django import forms
-from .models import FileResource
 
 class FileUploadForm(forms.ModelForm):
     class Meta:
         model = FileResource
-        fields = ['file', 'name','description','category', 'readable_roles', 'editable_roles']
+        fields = ['file', 'name', 'description', 'category', 'readable_roles', 'editable_roles']
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super(FileUploadForm, self).__init__(*args, **kwargs)
+
+        self.fields['file'].label = '上传文件'
+        self.fields['name'].label = '文件名'
+        self.fields['description'].label = '文件描述'
+        self.fields['category'].label = '文件分类'
+        self.fields['readable_roles'].label = '可读角色'
+        self.fields['editable_roles'].label = '可编辑角色'
 
         ROLE_CHOICES = [
             ('admin', '管理员'),

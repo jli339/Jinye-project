@@ -1,28 +1,38 @@
 import os
-from django.conf import settings
+from pathlib import Path
+
 from django.contrib.auth import get_user_model
+
 from core.models import FileResource
+
+SHARED_ROOT = Path(r"C:\Users\Lenovo\Desktop\项目共享区")
+
 
 def check_file_integrity():
     print("[调度] 正在执行文件一致性检查...")
 
-    # 步骤一：标记数据库中丢失的文件
+    # 步骤一：标记数据库中丢失的文件（包括 path 为空 或 不存在）
     for file in FileResource.objects.all():
-        path = os.path.join(settings.MEDIA_ROOT, file.path)
-        if not os.path.exists(path):
+        if not file.path:
             if "（文件缺失）" not in (file.description or ""):
                 file.description = (file.description or "") + "（文件缺失）"
                 file.save()
-                print(f"[失效] {file.name}")
+                print(f"[缺失] {file.name} - path 为空")
+            continue
+
+        path = Path(file.path)
+        if not path.exists():
+            if "（文件缺失）" not in (file.description or ""):
+                file.description = (file.description or "") + "（文件缺失）"
+                file.save()
+                print(f"[缺失] {file.name} - 路径不存在")
 
     # 步骤二：发现磁盘中新出现的文件
-    upload_dir = os.path.join(settings.MEDIA_ROOT, 'uploads')
     disk_file_set = set()
-    for root, dirs, files in os.walk(upload_dir):
+    for root, dirs, files in os.walk(SHARED_ROOT):
         for fname in files:
-            full_path = os.path.join(root, fname)
-            rel_path = os.path.relpath(full_path, settings.MEDIA_ROOT)
-            disk_file_set.add(rel_path.replace('\\', '/').replace('\\\\', '/'))
+            full_path = Path(root) / fname
+            disk_file_set.add(str(full_path.resolve()))
 
     db_file_set = set(FileResource.objects.values_list('path', flat=True))
     new_files = disk_file_set - db_file_set
@@ -41,7 +51,7 @@ def check_file_integrity():
                 path=path,
                 uploaded_by=admin_user,
                 description="（系统自动同步创建）",
-                category="other",  # 默认分类为“其他”
+                category="other",
                 readable_roles=["admin"],
                 editable_roles=["admin"]
             )
