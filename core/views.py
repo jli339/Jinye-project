@@ -9,6 +9,7 @@ from django.http import FileResponse, HttpResponseForbidden, Http404
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.encoding import escape_uri_path
 from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_http_methods
 
 # from .forms import FileResourceForm
 from .forms import FileUploadForm
@@ -186,4 +187,44 @@ def clean_invalid_files(request):
     )
 
     messages.success(request, f"已成功删除 {deleted_count} 条无效记录。")
+    return redirect('file_list')
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def bulk_edit_permissions(request):
+    if request.user.role != 'admin' and not request.user.is_superuser:
+        return HttpResponseForbidden("您没有权限进行批量权限设置。")
+
+    ALL_ROLES = ["admin", "production", "quality", "admin_office", "viewer"]  # 若你有 ROLE_CHOICES，可从模型/常量里取
+
+    if request.method == 'POST':
+        file_ids = request.POST.getlist('file_ids')
+        if not file_ids:
+            messages.warning(request, "请先在文件列表中勾选文件后再提交。")
+            return redirect('file_list')
+
+        files = FileResource.objects.filter(id__in=file_ids)
+
+        # 第二次提交：真正保存
+        if 'set_permissions' in request.POST:
+            readable_roles = request.POST.getlist('readable_roles')
+            editable_roles = request.POST.getlist('editable_roles')
+
+            for f in files:
+                f.readable_roles = readable_roles
+                f.editable_roles = editable_roles
+                f.save()
+
+            messages.success(request, f"成功更新 {len(files)} 个文件的权限设置。")
+            return redirect('file_list')
+
+        # 第一次提交：展示选择角色的页面
+        return render(request, 'core/bulk_edit_permissions.html', {
+            'files': files,
+            'roles': ALL_ROLES,
+        })
+
+    # 直接 GET 访问时引导回列表
+    messages.warning(request, "请先在文件列表中勾选文件后提交。")
     return redirect('file_list')

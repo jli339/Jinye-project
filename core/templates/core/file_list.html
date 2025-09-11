@@ -40,39 +40,59 @@
         </form>
 
         {% if files %}
-        <table class="table table-bordered table-hover">
-            <thead>
-            <tr>
-                <th>原始文件名</th>
-                <th>文件名</th>
-                <th>描述</th>
-                <th>类别</th>
-                <th>上传者</th>
-                <th>路径</th>
+        <form id="bulkForm" method="post" action="{% url 'bulk_edit_permissions' %}">
+            {% csrf_token %}
+            <table class="table table-bordered table-hover">
+                <thead>
+                <tr>
+                    <th style="width:36px;">
+                        <input type="checkbox" id="checkAll">
+                    </th>
+                    <th>原始文件名</th>
+                    <th>文件名</th>
+                    <th>描述</th>
+                    <th>类别</th>
+                    <th>上传者</th>
+                    <th>路径</th>
+                    <th>上传时间</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for file in files %}
+                <tr>
+                    <td>
+                        <input type="checkbox" name="file_ids" value="{{ file.id }}" class="cb-file">
+                    </td>
+                    <td>{{ file.original_filename }}</td>
+                    <td>{{ file.name }}</td>
+                    <td>{{ file.description }}</td>
+                    <td>{{ file.get_category_display }}</td>
+                    <td>{{ file.uploaded_by.username }}</td>
+                    <td style="word-break: break-all">{{ file.path }}</td>
+                    <td>{{ file.uploaded_at|date:"Y-m-d H:i" }}</td>
+                    <td>
+                        <a href="{% url 'download_file' file.id %}" class="btn btn-sm btn-primary">下载</a>
+                        <a href="{% url 'edit_permissions' file.id %}" class="btn btn-sm btn-secondary">权限</a>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
 
-                <th>上传时间</th>
-                <th>操作</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for file in files %}
-            <tr>
-                <td>{{ file.original_filename }}</td>
-                <td>{{ file.name }}</td>
-                <td>{{ file.description }}</td>
-                <td>{{ file.get_category_display }}</td>
-                <td>{{ file.uploaded_by.username }}</td>
-                <td>{{ file.path }}</td>
+            <button type="submit" class="btn btn-primary">批量修改权限</button>
+        </form>
 
-                <td>{{ file.uploaded_at|date:"Y-m-d H:i" }}</td>
-                <td>
-                    <a href="{% url 'download_file' file.id %}" class="btn btn-sm btn-primary">下载</a>
-                    <a href="{% url 'edit_permissions' file.id %}" class="btn btn-sm btn-primary">权限</a>
-                </td>
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+        <script>
+            (function () {
+                const all = document.getElementById('checkAll');
+                if (all) {
+                    all.addEventListener('change', function () {
+                        document.querySelectorAll('.cb-file').forEach(cb => cb.checked = this.checked);
+                    });
+                }
+            })();
+        </script>
         {% else %}
         <div class="text-muted">暂无文件</div>
         {% endif %}

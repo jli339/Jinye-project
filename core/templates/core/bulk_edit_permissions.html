@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>批量权限设置</h2>
+
+<form method="post">
+    {% csrf_token %}
+
+    <p>将为以下 {{ files|length }} 个文件设置权限：</p>
+    <ul>
+        {% for f in files %}
+        <li>{{ f.name }} — {{ f.path }}</li>
+        <input type="hidden" name="file_ids" value="{{ f.id }}">
+        {% endfor %}
+    </ul>
+
+    <div>
+        <label>可读角色：</label><br>
+        {% for r in roles %}
+        <label><input type="checkbox" name="readable_roles" value="{{ r }}"> {{ r }}</label>
+        {% endfor %}
+    </div>
+    <br>
+    <div>
+        <label>可写角色：</label><br>
+        {% for r in roles %}
+        <label><input type="checkbox" name="editable_roles" value="{{ r }}"> {{ r }}</label>
+        {% endfor %}
+    </div>
+    <br>
+    <button type="submit" name="set_permissions" class="btn btn-primary">保存</button>
+    <a href="{% url 'file_list' %}" class="btn btn-secondary">取消</a>
+</form>
+{% endblock %}
