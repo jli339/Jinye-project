@@ -15,6 +15,7 @@ from django.views.decorators.http import require_http_methods
 from .forms import FileUploadForm
 from .models import ActionLog
 from .models import FileResource
+from .scheduler import check_file_integrity
 
 
 # Create your views here.
@@ -97,6 +98,7 @@ def download_file(request, file_id):
 
 @login_required
 def file_list(request):
+    check_file_integrity()
     user = request.user
     query = request.GET.get('q', '')
     path_filter = request.GET.get('path', '')

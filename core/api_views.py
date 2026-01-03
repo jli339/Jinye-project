@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_GET
 
 # 定义你的共享目录根路径（确保路径存在）
-SHARED_ROOT = Path(r"C:\Users\Lenovo\Desktop\项目共享区")
+SHARED_ROOT = Path(r"D:\金冶文件库")
 
 
 def build_tree(path: Path):

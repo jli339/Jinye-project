@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 
 from core.models import FileResource
 
-SHARED_ROOT = Path(r"C:\Users\Lenovo\Desktop\项目共享区")
+SHARED_ROOT = Path(r"D:\金冶文件库")
 
 
 def check_file_integrity():
